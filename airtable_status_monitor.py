@@ -327,6 +327,7 @@ def run_down_probe(
             print(json.dumps(payload, indent=2))
             print("dry-run: skipped Slack send")
         else:
+            sent = False
             if use_chat_update:
                 last_ts = str(state.get("last_slack_message_ts", "")).strip()
                 last_channel = str(state.get("last_slack_channel_id", "")).strip()
@@ -340,6 +341,7 @@ def run_down_probe(
                             timeout_seconds=timeout_seconds,
                         )
                         print("down probe: updated existing Slack message")
+                        sent = True
                     else:
                         posted_ts = post_slack_message(
                             bot_token=slack_bot_token,
@@ -350,21 +352,17 @@ def run_down_probe(
                         state["last_slack_message_ts"] = posted_ts
                         state["last_slack_channel_id"] = slack_channel_id
                         print("down probe: posted new Slack message")
-                except Exception:
-                    # If update path fails (deleted message, channel change, etc.),
-                    # fallback to creating a new anchor message once.
-                    posted_ts = post_slack_message(
-                        bot_token=slack_bot_token,
-                        channel_id=slack_channel_id,
-                        payload=payload,
-                        timeout_seconds=timeout_seconds,
-                    )
-                    state["last_slack_message_ts"] = posted_ts
-                    state["last_slack_channel_id"] = slack_channel_id
-                    print("down probe: posted new Slack message after update fallback")
-            else:
+                        sent = True
+                except Exception as exc:
+                    print(f"down probe: Slack chat API failed: {exc}", file=sys.stderr)
+
+            if not sent and has_webhook:
                 send_slack_webhook(webhook_url, payload, timeout_seconds=timeout_seconds)
-                print("down probe: sent Slack notification")
+                print("down probe: sent Slack notification via webhook fallback")
+                sent = True
+
+            if not sent:
+                raise RuntimeError("down probe: no usable Slack delivery path")
         # Keep down_active=true; no additional state fields updated to avoid noisy commits.
         save_state(state_file, state)
         return 0

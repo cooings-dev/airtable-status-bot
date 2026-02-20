@@ -29,6 +29,7 @@ The GitHub Actions workflow runs every 10 minutes:
 3. (Recommended for update-in-place) also add:
    - `SLACK_BOT_TOKEN` = Slack bot token (`xoxb-...`)
    - `SLACK_CHANNEL_ID` = target channel ID (`C...`)
+   - Bot must have scope `chat:write` (or legacy `chat:write:bot`) and be invited to channel
 4. Go to `Actions` tab and enable workflows if prompted
 5. Optionally run a manual test:
    - `Airtable Status Monitor` -> `Run workflow`
@@ -36,6 +37,7 @@ The GitHub Actions workflow runs every 10 minutes:
 
 When both `SLACK_BOT_TOKEN` and `SLACK_CHANNEL_ID` exist, the bot updates the previous
 message instead of sending a new one each time.
+If bot posting fails, workflow automatically falls back to webhook sending.
 
 ## Files
 
