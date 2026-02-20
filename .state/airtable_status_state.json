@@ -1,7 +1,7 @@
 {
   "down_active": true,
   "last_description": "Partial System Outage",
-  "last_down_probe_checked_at_utc": "2026-02-20T23:27:20Z",
+  "last_down_probe_checked_at_utc": "2026-02-20T23:27:48Z",
   "last_hourly_checked_at_utc": "2026-02-20T21:44:23Z",
   "last_indicator": "major",
   "last_kind": "status",
