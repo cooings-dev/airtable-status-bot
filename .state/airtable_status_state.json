@@ -1,6 +1,7 @@
 {
   "down_active": true,
   "last_description": "Major System Outage",
+  "last_down_probe_checked_at_utc": "2026-02-20T21:44:48Z",
   "last_hourly_checked_at_utc": "2026-02-20T21:44:23Z",
   "last_indicator": "critical",
   "last_kind": "status"
