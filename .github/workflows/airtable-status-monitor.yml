@@ -61,12 +61,19 @@ jobs:
       - name: Run monitor
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
         run: |
           STATE_FILE=".state/airtable_status_state.json"
           if [ "${{ steps.resolve-mode.outputs.mode }}" = "hourly-probe" ]; then
             python airtable_status_monitor.py --mode hourly-probe --state-file "$STATE_FILE"
           else
-            python airtable_status_monitor.py --mode down-probe --state-file "$STATE_FILE" --webhook-url "$SLACK_WEBHOOK_URL"
+            python airtable_status_monitor.py \
+              --mode down-probe \
+              --state-file "$STATE_FILE" \
+              --webhook-url "$SLACK_WEBHOOK_URL" \
+              --slack-bot-token "$SLACK_BOT_TOKEN" \
+              --slack-channel-id "$SLACK_CHANNEL_ID"
           fi
 
       - name: Commit state if changed
