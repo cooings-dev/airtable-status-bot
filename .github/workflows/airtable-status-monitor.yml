@@ -1,0 +1,84 @@
+name: Airtable Status Monitor
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Run mode override"
+        required: false
+        default: "auto"
+        type: choice
+        options:
+          - auto
+          - hourly-probe
+          - down-probe
+
+permissions:
+  contents: write
+
+concurrency:
+  group: airtable-status-monitor
+  cancel-in-progress: false
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Resolve mode
+        id: resolve-mode
+        run: |
+          MODE=""
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.mode }}" != "auto" ]; then
+            MODE="${{ inputs.mode }}"
+          else
+            MINUTE="$(date -u +%M)"
+            if [ "$MINUTE" = "00" ]; then
+              MODE="hourly-probe"
+            else
+              MODE="down-probe"
+            fi
+          fi
+          echo "mode=$MODE" >> "$GITHUB_OUTPUT"
+          echo "Selected mode: $MODE"
+
+      - name: Run monitor
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          STATE_FILE=".state/airtable_status_state.json"
+          if [ "${{ steps.resolve-mode.outputs.mode }}" = "hourly-probe" ]; then
+            python airtable_status_monitor.py --mode hourly-probe --state-file "$STATE_FILE"
+          else
+            python airtable_status_monitor.py --mode down-probe --state-file "$STATE_FILE" --webhook-url "$SLACK_WEBHOOK_URL"
+          fi
+
+      - name: Commit state if changed
+        run: |
+          STATE_FILE=".state/airtable_status_state.json"
+          if [ -z "$(git status --porcelain -- "$STATE_FILE")" ]; then
+            echo "No state change to commit."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$STATE_FILE"
+          git commit -m "chore: update monitor state"
+          git push
