@@ -1,9 +1,9 @@
 {
-  "down_active": true,
-  "last_description": "Partial System Outage",
-  "last_down_probe_checked_at_utc": "2026-02-20T23:57:55Z",
+  "down_active": false,
+  "last_description": "All Systems Operational",
+  "last_down_probe_checked_at_utc": "2026-02-21T04:54:21Z",
   "last_hourly_checked_at_utc": "2026-02-20T21:44:23Z",
-  "last_indicator": "major",
+  "last_indicator": "none",
   "last_kind": "status",
   "last_slack_channel_id": "C0945P7EWV7",
   "last_slack_message_ts": "1771630040.368909"
